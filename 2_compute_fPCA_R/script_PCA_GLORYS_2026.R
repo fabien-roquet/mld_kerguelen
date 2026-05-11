@@ -1,5 +1,5 @@
 ##### TRAITEMENT DATA COUCHE DE MELANGE KERGUELEN  // VINCENT DORIOT // avr. 2023
-### Dense GLORYS fPCA/PCA export for the reorganized pipeline.
+### Dense GLORYS fPCA/PACE export for the reorganized pipeline.
 
 get_script_dir <- function() {
   args <- commandArgs(trailingOnly = FALSE)
@@ -14,19 +14,6 @@ get_script_dir <- function() {
   }
 
   getwd()
-}
-
-fill_missing_dense <- function(mat) {
-  col_means <- colMeans(mat, na.rm = TRUE)
-  global_mean <- mean(mat, na.rm = TRUE)
-  col_means[is.nan(col_means)] <- global_mean
-
-  missing_idx <- which(is.na(mat), arr.ind = TRUE)
-  if (nrow(missing_idx) > 0) {
-    mat[missing_idx] <- col_means[missing_idx[, 2]]
-  }
-
-  mat
 }
 
 script_dir <- get_script_dir()
@@ -73,35 +60,48 @@ if (length(indNA) > 0) {
   donmat <- donmat[-indNA, , drop = FALSE]
 }
 
-### ACP DENSE EXACTE
+### fPCA / PACE DENSE
 ###
 ### The previous version used fdapace with smoothed covariance estimation even
-### for the full GLORYS field. That is useful for sparse profiles, but it
-### intentionally smooths the dense monthly fields and produced a large RMSE in
-### Figure 6. Here we keep the original output schema but use an exact dense
-### PCA/SVD reconstruction instead.
+### for the full GLORYS field. That is useful for sparse profiles, but the
+### forced smooth covariance produced a GLORYS RMSE similar to the sparse
+### GLORYS_CL reconstruction. For dense data fdapace's default estimator is the
+### cross-sectional covariance, which stays inside the PACE implementation while
+### avoiding the extra smoothing.
 datemat <- t(datemat)
 donmat <- t(donmat)
-donmat_filled <- fill_missing_dense(donmat)
 
-mu <- rowMeans(donmat_filled)
-centered <- sweep(donmat_filled, 1, mu, "-")
-pca <- svd(centered)
-tol <- max(dim(centered)) * max(pca$d) * .Machine$double.eps
-nbcp <- sum(pca$d > tol)
-if (nbcp < 1) {
-  stop("No non-zero GLORYS PCA modes found.")
-}
+library(fdapace)
+res <- FPCA(
+  data.frame(donmat),
+  data.frame(datemat),
+  optns = list(
+    useBinnedData = "OFF",
+    methodMuCovEst = "cross-sectional",
+    nRegGrid = nmonth,
+    dataType = "DenseWithMV",
+    methodSelectK = "FVE",
+    FVEthreshold = 1,
+    methodXi = "IN",
+    maxK = min(nmonth - 2, ncol(donmat) - 1),
+    error = FALSE,
+    plot = FALSE
+  )
+)
 
-phi <- pca$u[, seq_len(nbcp), drop = FALSE]
-xiEst <- sweep(pca$v[, seq_len(nbcp), drop = FALSE], 2, pca$d[seq_len(nbcp)], "*")
-lambda <- (pca$d[seq_len(nbcp)]^2) / (ncol(donmat_filled) - 1)
-Xestot <- sweep(phi %*% t(xiEst), 1, mu, "+")
-workGrid <- dates
+#### RECONSTITUTION SERIE TEMP /CELL
+#### A FAIRE TOURNER OBLIGATOIREMENT POUR AVOIR LA SUITE NOTAMMENT Xestot
+nbcp <- length(res$lambda)
+Xestot <- sweep(
+  res$phi[, seq_len(nbcp), drop = FALSE] %*% t(res$xiEst[, seq_len(nbcp), drop = FALSE]),
+  1,
+  res$mu,
+  "+"
+)
 
-write.csv(workGrid, file.path(output_dir, "PCA_GRID.csv"), row.names = TRUE)
-write.csv(lambda, file.path(output_dir, "PCA_LAMBDA.csv"), row.names = TRUE)
+write.csv(res$workGrid, file.path(output_dir, "PCA_GRID.csv"), row.names = TRUE)
+write.csv(res$lambda, file.path(output_dir, "PCA_LAMBDA.csv"), row.names = TRUE)
 write.csv(Xestot, file.path(output_dir, "PCA_MLD.csv"), row.names = TRUE)
-write.csv(phi, file.path(output_dir, "PCA_PHI.csv"), row.names = TRUE)
-write.csv(xiEst, file.path(output_dir, "PCA_XIEST.csv"), row.names = TRUE)
-write.csv(mu, file.path(output_dir, "PCA_MU.csv"), row.names = TRUE)
+write.csv(res$phi, file.path(output_dir, "PCA_PHI.csv"), row.names = TRUE)
+write.csv(res$xiEst, file.path(output_dir, "PCA_XIEST.csv"), row.names = TRUE)
+write.csv(res$mu, file.path(output_dir, "PCA_MU.csv"), row.names = TRUE)
