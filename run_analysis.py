@@ -15,6 +15,7 @@ DATA_SCRIPTS = {
     "CMA": PROJECT_ROOT / "1_data_processing" / "process_CMA.py",
     "GLORYS": PROJECT_ROOT / "1_data_processing" / "process_GLORYS.py",
     "GLORYS_CL": PROJECT_ROOT / "1_data_processing" / "process_GLORYS_CL.py",
+    "GLORYS_SECTION": PROJECT_ROOT / "1_data_processing" / "process_GLORYS_section.py",
 }
 
 FPCA_SCRIPTS = {
@@ -36,7 +37,7 @@ FIGURE_SCRIPTS = {
     "10": PROJECT_ROOT / "3_generate_figures" / "Figure_10_KERFIX.py",
 }
 
-DEFAULT_FIGURES = ["2", "3", "4", "5", "6", "7", "8", "10"]
+DEFAULT_FIGURES = ["2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 
 def run_command(command: list[str], cwd: Path = PROJECT_ROOT) -> None:
@@ -75,7 +76,9 @@ def main() -> None:
 
     if "fpca" in stages:
         for dataset in args.datasets:
-            run_command(["Rscript", str(FPCA_SCRIPTS[dataset])])
+            script = FPCA_SCRIPTS.get(dataset)
+            if script is not None:
+                run_command(["Rscript", str(script)])
 
     if "figures" in stages:
         for figure in args.figures:

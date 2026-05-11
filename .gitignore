@@ -15,6 +15,7 @@ wheels/
 
 # Large local data and generated analysis products
 data/*.nc
+!data/GLORYS_1000m_section_timemean.nc
 processed/
 processed_reference/
 

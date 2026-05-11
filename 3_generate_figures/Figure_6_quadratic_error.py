@@ -23,14 +23,18 @@ from figure_common import (
 )
 
 
-def compute_qe(ds_pred, ds_ref, var="mld"):
+def compute_qe(ds_pred, ds_ref, var="mld", mask=None):
     err = ds_pred[var] - ds_ref[var]
+    if mask is not None:
+        err = err.where(mask)
     qe = np.sqrt((err**2).mean(dim="time", skipna=True))
     return qe, qe.where(qe > 0)
 
 
-def monthly_rmse(ds_pred, ds_ref, var="mld"):
+def monthly_rmse(ds_pred, ds_ref, var="mld", mask=None):
     err = ds_pred[var] - ds_ref[var]
+    if mask is not None:
+        err = err.where(mask)
     return np.sqrt((err**2).groupby("time.month").mean(skipna=True).mean(["lat", "long"], skipna=True))
 
 
@@ -49,9 +53,10 @@ def main() -> None:
     ds_CL_og = align_original_anomaly(args.project_root, "GLORYS_CL_anom.nc", ds_G)
     ds_CMA_og = align_original_anomaly(args.project_root, "CMA_anom.nc", ds_G)
 
-    qe_g, qe_plot_g = compute_qe(ds_G, ds_G_og)
-    qe_cl, qe_plot_cl = compute_qe(ds_CL, ds_CL_og)
-    qe_cma, qe_plot_cma = compute_qe(ds_CMA, ds_CMA_og)
+    evaluation_mask = ds_CL_og["mld"].notnull()
+    qe_g, qe_plot_g = compute_qe(ds_G, ds_G_og, mask=evaluation_mask)
+    qe_cl, qe_plot_cl = compute_qe(ds_CL, ds_CL_og, mask=evaluation_mask)
+    qe_cma, qe_plot_cma = compute_qe(ds_CMA, ds_CMA_og, mask=evaluation_mask)
 
     fig = plt.figure(figsize=(30, 20))
     gs = fig.add_gridspec(2, 4, width_ratios=[1, 1, 1, 0.05], height_ratios=[1, 1], wspace=0.2, hspace=0.2)
@@ -77,7 +82,11 @@ def main() -> None:
     fig.colorbar(pcm, cax=cax).set_label("RMSE [m]")
 
     for data_ts, color_ts, label_ts in zip(
-        [monthly_rmse(ds_G, ds_G_og), monthly_rmse(ds_CL, ds_CL_og), monthly_rmse(ds_CMA, ds_CMA_og)],
+        [
+            monthly_rmse(ds_G, ds_G_og, mask=evaluation_mask),
+            monthly_rmse(ds_CL, ds_CL_og, mask=evaluation_mask),
+            monthly_rmse(ds_CMA, ds_CMA_og, mask=evaluation_mask),
+        ],
         [G_COLOR, CL_COLOR, CMA_COLOR],
         ["GLORYS", "GLORYS_CL", "CMA"],
     ):
@@ -96,7 +105,7 @@ def main() -> None:
     print(f"The standard deviation of the RMSE of GLORYS_CL is: {qe_cl.std().item():.2f}")
     print(f"The mean RMSE of CMA: {qe_cma.mean().item():.2f}")
     print(f"The standard deviation of the RMSE of CMA is: {qe_cma.std().item():.2f}")
-    save_figure(fig, paths(args.project_root)["figures"] / "Figure_6_RMSE.png")
+    save_figure(fig, paths(args.project_root)["figures"] / "Figure_6_RMSE_mask.png")
 
 
 if __name__ == "__main__":

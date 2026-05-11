@@ -18,7 +18,18 @@ Expected local files:
 - `data/GLORYS_2026.nc`
 - `data/GEBCO_ker_large.nc`
 - `data/fronts_62985.nc`
+- `data/GLORYS_1000m_section_timemean.nc` for Figure 9
 - `data/kerfix.csv` for Figure 10
+
+The Figure 9 time-mean section file is generated once from the large temporary
+source `data/GLORYS_1000m_section_plot.nc`:
+
+```bash
+uv run python 1_data_processing/process_GLORYS_section.py
+```
+
+After `data/GLORYS_1000m_section_timemean.nc` exists, the large source file is
+not required by the figure script.
 
 ## Running
 
@@ -58,4 +69,4 @@ uv run python 3_generate_figures/Figure_4_MU_modes.py
 uv run python scripts/compare_processed_reference.py
 ```
 
-Figures 1 and 9 are represented by scripts, but they require source files that are not part of the reduced two-input workflow.
+Figure 1 is represented by a script, but it requires source files that are not part of the reduced two-input workflow.

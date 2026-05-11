@@ -32,6 +32,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for partial environme
         matter = colormaps["plasma"]
         balance = colormaps["coolwarm"]
         amp = colormaps["magma"]
+        thermal = colormaps["inferno"]
 
     cmo = _CmoFallback()
 

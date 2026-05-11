@@ -7,7 +7,13 @@ Expected local input files:
 - `GEBCO_ker_large.nc`
 - `fronts_62985.nc`
 - `kerfix.csv` for the KERFIX figure workflow
+- `GLORYS_1000m_section_timemean.nc` for Figure 9
 
-The NetCDF files are ignored by Git because they are large. Keep them locally in this directory.
+The large raw NetCDF files are ignored by Git. Keep them locally in this directory.
+`GLORYS_1000m_section_timemean.nc` is generated from `GLORYS_1000m_section_plot.nc`
+with `1_data_processing/process_GLORYS_section.py`; the large source file is not
+needed after the time-mean file has been created.
 
-Some original notebooks referenced additional raw or section-specific files. Those figures are kept as explicit scripts, but they are not part of the default reproducible two-input pipeline unless the extra files are added here.
+Some original notebooks referenced additional raw or section-specific files. Those
+figures are kept as explicit scripts, but they are not part of the reduced
+two-input pipeline unless the extra files are added here.

@@ -21,6 +21,7 @@ KERGUELEN_BOX = {
     "lat_min": -50.0,
     "lat_max": -48.0,
 }
+_WARNED_GSW_FALLBACK = False
 
 
 @dataclass(frozen=True)
@@ -162,14 +163,17 @@ def sigma0_unesco(salinity: xr.DataArray, temperature: xr.DataArray) -> xr.DataA
 
 
 def compute_sigma0(ds: xr.Dataset) -> xr.DataArray:
+    global _WARNED_GSW_FALLBACK
     try:
         import gsw  # type: ignore
     except ModuleNotFoundError:
-        warnings.warn(
-            "gsw is not installed; using an EOS-80 sigma0 approximation for GLORYS MLD.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+        if not _WARNED_GSW_FALLBACK:
+            warnings.warn(
+                "gsw is not installed; using an EOS-80 sigma0 approximation for GLORYS MLD.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            _WARNED_GSW_FALLBACK = True
         return sigma0_unesco(ds["so"], ds["thetao"])
 
     return xr.apply_ufunc(
