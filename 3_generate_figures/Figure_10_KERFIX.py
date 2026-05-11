@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Python script version of Figure_10_KERFIX.ipynb."""
+
+from __future__ import annotations
+
+import argparse
+
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from figure_common import open_gridded, parse_project_root_arg, paths, require_file, save_figure
+
+
+def main() -> None:
+    parser = parse_project_root_arg(argparse.ArgumentParser(description=__doc__))
+    args = parser.parse_args()
+    plt.rcParams.update({"font.size": 20})
+
+    try:
+        import gsw
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError("Figure 10 requires gsw. Install project dependencies with uv sync.") from exc
+
+    df_ker = pd.read_csv(require_file(paths(args.project_root)["data"] / "kerfix.csv"), sep=";")
+    profile_id = df_ker["profileID"].astype(str)
+    date_prefix = profile_id.str[:2].apply(lambda value: "19" + value if int(value) > 50 else "20" + value)
+    df_ker["TIME"] = pd.to_datetime(date_prefix + profile_id.str[2:], format="%Y%m")
+    df_ker["DEPTH"] = -gsw.conversions.z_from_p(df_ker["PRES"], lat=-50.6667, geo_strf_dyn_height=0, sea_surface_geopotential=0)
+    df_ker["SA"] = gsw.SA_from_SP(df_ker["PSAL"], df_ker["PRES"], lon=68.4167, lat=-50.6667)
+    df_ker["CT"] = gsw.CT_from_t(df_ker["SA"], df_ker["TEMP"], df_ker["PRES"])
+    df_ker["sigma0"] = gsw.density.sigma0(df_ker["SA"], df_ker["CT"])
+    ds_ker = df_ker.reset_index(drop=True).set_index(["TIME", "DEPTH"]).to_xarray()
+
+    sigma0_10m = ds_ker.sel(DEPTH=10, method="nearest").sigma0
+    mask = ((ds_ker.sigma0 - sigma0_10m) >= 0.03) & (ds_ker.DEPTH >= 10)
+    has = mask.any(dim="DEPTH")
+    mld = ds_ker.DEPTH.isel(DEPTH=mask.argmax(dim="DEPTH")).where(has)
+    ds_ker = ds_ker.assign({"mld": (("TIME"), mld.data)})
+
+    lon_ker = 68.4167
+    lat_ker = -50.6667
+    ds_G = open_gridded(args.project_root, "GLORYS_gridded.nc").sel(longitude=lon_ker, latitude=lat_ker, method="nearest")
+
+    ker = ds_ker["mld"].dropna(dim="TIME")
+    glo = ds_G["mld"].dropna(dim="time")
+    ker_xlim = (ker["TIME"].min().values - np.timedelta64(30, "D"), ker["TIME"].max().values + np.timedelta64(30, "D"))
+    glo_xlim = (glo["time"].min().values - np.timedelta64(90, "D"), glo["time"].max().values + np.timedelta64(90, "D"))
+    ker_span = (ker_xlim[1] - ker_xlim[0]) / np.timedelta64(1, "D")
+    glo_span = (glo_xlim[1] - glo_xlim[0]) / np.timedelta64(1, "D")
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(30, 10), gridspec_kw={"width_ratios": [ker_span, glo_span], "wspace": 0.05})
+    ax1.plot(ker["TIME"].values, ker.values, color="#FF7733", lw=1.5, ms=4, label="KERFIX")
+    ax2.plot(glo["time"].values, glo.values, color="black", lw=1.5, label="GLORYS")
+    ax1.set_xlim(*ker_xlim)
+    ax2.set_xlim(*glo_xlim)
+    for ax in (ax1, ax2):
+        ax.xaxis.set_major_locator(mdates.YearLocator(2))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        ax.set_xlabel("Time")
+        ax.grid(True, alpha=0.3)
+    ax1.spines["right"].set_visible(False)
+    ax2.spines["left"].set_visible(False)
+    ax2.tick_params(labelleft=False, left=False)
+
+    fig.canvas.draw()
+    pix = 10
+    dx1, dy1 = pix / ax1.bbox.width, pix / ax1.bbox.height
+    dx2, dy2 = pix / ax2.bbox.width, pix / ax2.bbox.height
+    kwargs = dict(color="k", clip_on=False)
+    ax1.plot((1 - dx1, 1 + dx1), (-dy1, +dy1), transform=ax1.transAxes, **kwargs)
+    ax1.plot((1 - dx1, 1 + dx1), (1 - dy1, 1 + dy1), transform=ax1.transAxes, **kwargs)
+    ax2.plot((-dx2, +dx2), (-dy2, +dy2), transform=ax2.transAxes, **kwargs)
+    ax2.plot((-dx2, +dx2), (1 - dy2, 1 + dy2), transform=ax2.transAxes, **kwargs)
+
+    ker_mean, ker_std = float(ker.mean().values), float(ker.std().values)
+    glo_mean, glo_std = float(glo.mean().values), float(glo.std().values)
+    ax1.axhline(ker_mean, color="#FF7733", ls="--", lw=2, alpha=0.9, label=f"MLD = {ker_mean:.1f} +/- {ker_std:.1f} m")
+    ax2.axhline(glo_mean, color="dimgray", ls="--", lw=2, alpha=0.9, label=f"MLD = {glo_mean:.1f} +/- {glo_std:.1f} m")
+    ax1.set_ylabel("MLD [m]")
+    fig.legend(loc="upper center", ncol=2, bbox_to_anchor=(0.5, 0.87))
+    save_figure(fig, paths(args.project_root)["figures"] / "Figure_10_KERFIX_GLORYS_timeseries.png")
+
+
+if __name__ == "__main__":
+    main()

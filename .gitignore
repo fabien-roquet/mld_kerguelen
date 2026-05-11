@@ -16,6 +16,7 @@ wheels/
 # Large local data and generated analysis products
 data/*.nc
 processed/
+processed_reference/
 
 # Runtime caches
 .ruff_cache/

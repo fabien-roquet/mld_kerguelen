@@ -9,3 +9,5 @@ Expected local input files:
 - `kerfix.csv` for the KERFIX figure workflow
 
 The NetCDF files are ignored by Git because they are large. Keep them locally in this directory.
+
+Some original notebooks referenced additional raw or section-specific files. Those figures are kept as explicit scripts, but they are not part of the default reproducible two-input pipeline unless the extra files are added here.
