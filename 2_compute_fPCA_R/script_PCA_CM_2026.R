@@ -91,7 +91,7 @@ set.seed(1)
 res=FPCA(data.frame(donmat),data.frame(datemat)
          ,optns=list(useBinnedData='OFF',
                      methodMuCovEst='smooth',
-                     userBwCov=1.5,
+                     userBwCov=0.25,
                      userBwMu=0.05,
                      kernel="epan",
                      nRegGrid=204,
@@ -120,8 +120,6 @@ Xestot=NULL
 for(numobs in 1:nobs){
   Xest=res$mu+apply(sweep(res$phi,2,res$xiEst[numobs,],"*")[,1:nbcp],1,sum)
   Xestot=cbind(Xestot,Xest)
-  Xestp=pnorm(0.975)*sqrt(diag(res$phi%*%res$xiVar[[numobs]]%*%t(res$phi)))
-  Xconf=cbind(Xest-Xestp,Xest,Xest+Xestp)
   
   #
   #plot(datemat[,numobs],donmat[,numobs],main="Reconstitution temporelle d'un bin après l'utilisation du kriging"

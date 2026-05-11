@@ -22,9 +22,9 @@ def main() -> None:
     phi_nums = [1, 2]
 
     fig, axes = plt.subplots(
-        1 + len(phi_nums),
+        len(phi_nums),
         1,
-        figsize=(15, 15),
+        figsize=(15, 10),
         sharex=True,
         constrained_layout=True,
         gridspec_kw={"hspace": 0.05},
@@ -35,16 +35,8 @@ def main() -> None:
         ("CMA", fpca["CMA"][0], fpca["CMA"][5], CMA_COLOR),
     ]
 
-    mu_ax = axes[0]
-    for label, _, df_mu, color in datasets:
-        mu_ax.plot(df_mu["MU"], color=color, linewidth=2, label=label)
-    mu_ax.legend(loc="upper center", fontsize=LEGEND_FS, ncol=3, labels=["GLORYS", r"GLORYS$_{CL}$", "CMA"])
-    mu_ax.axhline(0, color="k", linestyle="--", linewidth=1)
-    mu_ax.set_ylabel(r"$\mu (t) [m]$")
-    mu_ax.text(0.01, 0.98, "(a)", transform=mu_ax.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
-
     for j, n in enumerate(phi_nums):
-        ax_i = axes[j + 1]
+        ax_i = axes[j]
         var = f"phi{n}"
         var_name = rf"$\xi_{{{n}}}$"
         for label, ds, _, color in datasets:
@@ -55,7 +47,7 @@ def main() -> None:
         ax_i.set_ylim(-1, 1)
         ax_i.set_ylabel(rf"$\xi_{{{n}}}$")
         ax_i.axhline(0, color="k", linestyle="--", linewidth=1)
-        ax_i.text(0.01, 0.98, f"({chr(98 + j)})", transform=ax_i.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
+        ax_i.text(0.01, 0.98, f"({chr(97 + j)})", transform=ax_i.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
 
     axes[-1].xaxis.set_major_locator(mdates.YearLocator(2))
     axes[-1].xaxis.set_minor_locator(mdates.YearLocator(1))
