@@ -11,5 +11,13 @@ dependencies = [
     "numpy>=1.24",
     "pandas>=2.0",
     "scipy>=1.11",
+    "tomli>=2.0; python_version < '3.11'",
     "xarray>=2023.11",
 ]
+
+[tool.mld-kerguelen.r]
+packages = [
+    "fdapace",
+]
+repos = "https://cloud.r-project.org"
+library = ".r-lib"

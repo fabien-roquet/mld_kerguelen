@@ -86,6 +86,7 @@ library(fdapace)
 datemat=t(datemat)
 donmat=t(donmat)
 
+set.seed(1)
 
 res=FPCA(data.frame(donmat),data.frame(datemat)
          ,optns=list(useBinnedData='OFF',
@@ -99,7 +100,7 @@ res=FPCA(data.frame(donmat),data.frame(datemat)
                      FVEthreshold = 1,
                      methodXi='CE',
                      maxK=100,
-                     plot=TRUE
+                     plot=FALSE
          ))
 
 #x11()
@@ -159,13 +160,6 @@ for(tps in 1:204){
 
 ################################### MOVIE
 graphics.off()
-library(fields)
-library(animation)
-colo=tim.colors(n=64,alpha=1)
-dates=seq(2007,2023,length=204)
-
-oopts = if (.Platform$OS.type == "windows") {ani.options(ffmpeg =
-                                                           "C:/ffmpeg/bin/ffmpeg.exe",interval=0.05)}
 
 # saveVideo({
 #   for(tps in 1:300){

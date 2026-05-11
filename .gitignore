@@ -8,10 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+.r-lib/
 
 # Local/editor noise
 .DS_Store
 .ipynb_checkpoints/
+Rplots.pdf
 
 # Large local data and generated analysis products
 data/*.nc

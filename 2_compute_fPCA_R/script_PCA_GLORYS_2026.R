@@ -72,6 +72,7 @@ datemat <- t(datemat)
 donmat <- t(donmat)
 
 library(fdapace)
+set.seed(1)
 res <- FPCA(
   data.frame(donmat),
   data.frame(datemat),

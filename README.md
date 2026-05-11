@@ -39,6 +39,17 @@ Install Python dependencies:
 uv sync
 ```
 
+`uv` installs the Python environment. The R interpreter itself still needs to
+exist on the machine as `Rscript` because `uv` cannot install R. R packages are
+listed in `pyproject.toml` under `[tool.mld-kerguelen.r]`; `run_analysis.py`
+checks/installs them into the local `.r-lib/` folder before the fPCA stage.
+
+Bootstrap only the R package library:
+
+```bash
+uv run python run_analysis.py --stage setup
+```
+
 Run the whole modular pipeline:
 
 ```bash
@@ -57,7 +68,7 @@ Run individual scripts directly:
 
 ```bash
 uv run python 1_data_processing/process_CMA.py
-Rscript 2_compute_fPCA_R/script_PCA_CM_2026.R
+uv run python run_analysis.py --stage fpca --datasets CMA
 uv run python 3_generate_figures/Figure_4_MU_modes.py
 ```
 

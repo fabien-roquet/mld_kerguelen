@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -38,11 +40,61 @@ FIGURE_SCRIPTS = {
 }
 
 DEFAULT_FIGURES = ["2", "3", "4", "5", "6", "7", "8", "9", "10"]
+R_SETUP_SCRIPT = PROJECT_ROOT / "scripts" / "setup_r_packages.R"
 
 
-def run_command(command: list[str], cwd: Path = PROJECT_ROOT) -> None:
+def read_pyproject() -> dict:
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover - Python 3.10 fallback
+        try:
+            import tomli as tomllib
+        except ModuleNotFoundError as exc:
+            raise SystemExit("Missing tomli. Run `uv sync` before launching the pipeline with Python 3.10.") from exc
+
+    with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
+        return tomllib.load(file)
+
+
+def r_config() -> dict:
+    pyproject = read_pyproject()
+    config = pyproject.get("tool", {}).get("mld-kerguelen", {}).get("r", {})
+    return {
+        "packages": list(config.get("packages", [])),
+        "repos": config.get("repos", "https://cloud.r-project.org"),
+        "library": PROJECT_ROOT / config.get("library", ".r-lib"),
+    }
+
+
+def r_environment(config: dict | None = None) -> dict[str, str]:
+    config = config or r_config()
+    env = os.environ.copy()
+    r_lib = str(Path(config["library"]).resolve())
+    env["MLD_R_LIB"] = r_lib
+    env["MLD_R_REPOS"] = str(config["repos"])
+    existing_libs = env.get("R_LIBS_USER")
+    env["R_LIBS_USER"] = r_lib if not existing_libs else os.pathsep.join([r_lib, existing_libs])
+    return env
+
+
+def run_command(command: list[str], cwd: Path = PROJECT_ROOT, env: dict[str, str] | None = None) -> None:
     print("+ " + " ".join(command), flush=True)
-    subprocess.run(command, cwd=cwd, check=True)
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+
+
+def ensure_r_packages() -> dict[str, str]:
+    if shutil.which("Rscript") is None:
+        raise SystemExit(
+            "R is required for the fPCA stage, but `Rscript` was not found. "
+            "Install R first, then rerun `uv run python run_analysis.py --stage setup`."
+        )
+
+    config = r_config()
+    packages = config["packages"]
+    env = r_environment(config)
+    if packages:
+        run_command(["Rscript", str(R_SETUP_SCRIPT), str(PROJECT_ROOT), str(config["repos"]), *packages], env=env)
+    return env
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage",
         nargs="+",
-        choices=["data", "fpca", "figures", "compare"],
+        choices=["setup", "data", "fpca", "figures", "compare"],
         default=["data", "fpca", "figures", "compare"],
         help="Pipeline stages to run.",
     )
@@ -58,6 +110,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--figures", nargs="+", choices=FIGURE_SCRIPTS.keys(), default=DEFAULT_FIGURES)
     parser.add_argument("--force-data", action="store_true", help="Recompute data-processing outputs.")
     parser.add_argument("--skip-reference-compare", action="store_true", help="Alias for omitting the compare stage.")
+    parser.add_argument("--skip-r-setup", action="store_true", help="Do not check/install R packages before fPCA.")
     return parser.parse_args()
 
 
@@ -66,6 +119,12 @@ def main() -> None:
     stages = set(args.stage)
     if args.skip_reference_compare:
         stages.discard("compare")
+
+    r_env = None
+    if ("setup" in stages or "fpca" in stages) and not args.skip_r_setup:
+        r_env = ensure_r_packages()
+    elif "fpca" in stages:
+        r_env = r_environment()
 
     if "data" in stages:
         for dataset in args.datasets:
@@ -78,7 +137,7 @@ def main() -> None:
         for dataset in args.datasets:
             script = FPCA_SCRIPTS.get(dataset)
             if script is not None:
-                run_command(["Rscript", str(script)])
+                run_command(["Rscript", str(script)], env=r_env)
 
     if "figures" in stages:
         for figure in args.figures:
