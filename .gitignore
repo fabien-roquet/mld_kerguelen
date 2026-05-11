@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local/editor noise
+.DS_Store
+.ipynb_checkpoints/
+
+# Large local data and generated analysis products
+data/*.nc
+processed/
+
+# Runtime caches
+.ruff_cache/
+.pytest_cache/
