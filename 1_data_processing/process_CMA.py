@@ -27,8 +27,8 @@ def process_cma(project_root: str | Path = PROJECT_ROOT, force: bool = False, nb
     r_file = paths.r_input / "CMA_masked.txt"
 
     if not force and gridded_file.exists() and anom_file.exists() and clim_file.exists():
-        ds = xr.open_dataset(gridded_file)
-        write_r_input(ds, r_file)
+        ds_anom = xr.open_dataset(anom_file)
+        write_r_input(ds_anom, r_file)
         print("Reused existing CMA NetCDF products.")
         return
 
@@ -40,12 +40,12 @@ def process_cma(project_root: str | Path = PROJECT_ROOT, force: bool = False, nb
     ds_masked = ds.where(~mask)
 
     # CMA.ipynb: remove the mean seasonal cycle and write anomaly/climatology products.
-    write_anomaly_products(ds_masked, mask, anom_file, clim_file)
+    ds_anom = write_anomaly_products(ds_masked, mask, anom_file, clim_file)
 
-    # CMA.ipynb: write masked gridded MLD for maps and R input.
+    # CMA.ipynb: write masked gridded MLD for maps, and anomalies for R input.
     ds_masked.to_netcdf(gridded_file)
     print(f"Wrote {gridded_file}")
-    write_r_input(ds_masked, r_file)
+    write_r_input(ds_anom, r_file)
 
 
 def parse_args() -> argparse.Namespace:
