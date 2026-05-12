@@ -14,6 +14,10 @@ The large raw NetCDF files are ignored by Git. Keep them locally in this directo
 with `1_data_processing/process_GLORYS_section.py`; the large source file is not
 needed after the time-mean file has been created.
 
+All derived MLD products use the common `0.03 kg m-3` density threshold relative
+to 10 m, including GLORYS, GLORYS_CL, the GLORYS section product, CMA, and
+KERFIX.
+
 Some original notebooks referenced additional raw or section-specific files. Those
 figures are kept as explicit scripts, but they are not part of the reduced
 two-input pipeline unless the extra files are added here.

@@ -53,8 +53,8 @@ def process_glorys_cl(
         longitude=slice(ds_obs_raw.longitude.min() - 0.5, ds_obs_raw.longitude.max() + 0.5),
     )
 
-    # GLORYS_CL.ipynb: density-threshold MLD with the CL threshold.
-    mld = compute_glorys_mld(ds_g, density_threshold=0.02, block_size=block_size)
+    # GLORYS_CL.ipynb: density-threshold MLD using the common study threshold.
+    mld = compute_glorys_mld(ds_g, density_threshold=0.03, block_size=block_size)
 
     # GLORYS_CL.ipynb: bin/interpolate to the observation grid, then keep only observed cells.
     ds_cl = grid_glorys_mld(mld, ds_obs_grid, nb_bins=nb_bins)

@@ -68,7 +68,7 @@ Mean and standard deviation are over all finite monthly grid cells.
 | Product | Valid values | Mean MLD (m) | Std MLD (m) |
 |---|---:|---:|---:|
 | GLORYS | 307,470 | 98.45 | 60.43 |
-| GLORYS_CL | 27,411 | 93.99 | 54.55 |
+| GLORYS_CL | 27,339 | 102.61 | 57.03 |
 | CMA | 27,149 | 109.21 | 68.94 |
 
 Pointwise GLORYS-CMA difference at observed monthly grid cells:
@@ -76,23 +76,23 @@ Pointwise GLORYS-CMA difference at observed monthly grid cells:
 | Difference | n | Mean (m) | Std (m) | RMSE (m) |
 |---|---:|---:|---:|---:|
 | GLORYS - CMA | 27,041 | -13.67 | 40.47 | 42.72 |
-| GLORYS_CL - CMA | 27,041 | -13.67 | 40.47 | 42.72 |
+| GLORYS_CL - CMA | 26,978 | -4.45 | 39.17 | 39.42 |
 
 Pointwise correlations at observed monthly grid cells:
 
 | Pair | Correlation | n |
 |---|---:|---:|
 | GLORYS vs CMA | 0.786 | 27,041 |
-| GLORYS_CL vs CMA | 0.786 | 27,041 |
-| GLORYS vs GLORYS_CL | 1.000 | 27,411 |
+| GLORYS_CL vs CMA | 0.795 | 26,978 |
+| GLORYS vs GLORYS_CL | 0.986 | 27,339 |
 
 Spatial climatology correlations:
 
 | Pair | Correlation | n |
 |---|---:|---:|
 | GLORYS vs CMA | 0.668 | 1,501 |
-| GLORYS_CL vs CMA | 0.840 | 1,501 |
-| GLORYS vs GLORYS_CL | 0.741 | 1,521 |
+| GLORYS_CL vs CMA | 0.817 | 1,501 |
+| GLORYS vs GLORYS_CL | 0.739 | 1,521 |
 
 ## Seasonal Cycle and Domain-Mean Anomalies
 
@@ -100,15 +100,15 @@ Statistics below use the products plotted in Figure 3: monthly climatology files
 
 | Product | Climatology min (m) | Climatology max (m) | Seasonal amplitude (m) | Anomaly mean (m) | Anomaly std (m) |
 |---|---:|---:|---:|---:|---:|
-| GLORYS | 49.12 | 176.23 | 127.11 | -0.96 | 8.57 |
-| GLORYS_CL | 46.82 | 162.67 | 115.86 | -0.04 | 10.23 |
-| CMA | 61.71 | 182.19 | 120.47 | -0.49 | 12.77 |
+| GLORYS | 49.77 | 178.58 | 128.81 | -0.96 | 8.57 |
+| GLORYS_CL | 53.46 | 177.21 | 123.74 | -0.11 | 10.78 |
+| CMA | 62.54 | 184.61 | 122.08 | -0.49 | 12.77 |
 
 Domain-mean anomaly differences:
 
 | Difference | Mean (m) | Std (m) | Min (m) | Max (m) |
 |---|---:|---:|---:|---:|
-| GLORYS_CL - GLORYS | 0.92 | 7.68 | -24.57 | 23.44 |
+| GLORYS_CL - GLORYS | 0.84 | 7.84 | -28.69 | 24.67 |
 | CMA - GLORYS | 0.47 | 11.01 | -37.23 | 68.71 |
 
 ## fPCA/PACE Statistics
@@ -116,7 +116,7 @@ Domain-mean anomaly differences:
 | Product | Retained modes | Mode 1 (%) | Mode 2 (%) | First 2 modes (%) | First 5 modes (%) |
 |---|---:|---:|---:|---:|---:|
 | GLORYS | 125 | 52.78 | 14.81 | 67.58 | 75.53 |
-| GLORYS_CL | 86 | 48.44 | 10.62 | 59.06 | 76.64 |
+| GLORYS_CL | 86 | 47.92 | 10.85 | 58.76 | 76.48 |
 | CMA | 88 | 42.75 | 12.08 | 54.84 | 72.36 |
 
 Temporal-mode summary:
@@ -124,7 +124,7 @@ Temporal-mode summary:
 | Product | mean xi1 | std xi1 | mean xi2 | std xi2 |
 |---|---:|---:|---:|---:|
 | GLORYS | 0.179 | 0.174 | -0.139 | 0.209 |
-| GLORYS_CL | 0.217 | 0.124 | -0.026 | 0.249 |
+| GLORYS_CL | 0.217 | 0.123 | -0.023 | 0.249 |
 | CMA | 0.207 | 0.141 | -0.087 | 0.235 |
 
 ## Reconstruction Error
@@ -134,8 +134,8 @@ Figure 6 RMSE values are evaluated on the co-located `GLORYS_CL` sampling mask.
 | Product | Mean RMSE (m) | Std RMSE (m) |
 |---|---:|---:|
 | GLORYS | 9.32 | 7.53 |
-| GLORYS_CL | 16.11 | 8.48 |
-| CMA | 29.11 | 17.59 |
+| GLORYS_CL | 16.50 | 8.48 |
+| CMA | 28.79 | 17.09 |
 
 ## Domain-Mean Trends
 
@@ -143,15 +143,15 @@ Slopes are in `m yr-1`, with p-values in parentheses.
 
 | Period | GLORYS | GLORYS_CL | CMA |
 |---|---:|---:|---:|
-| Annual | -0.20 (0.21) | -0.39 (0.05) | -0.30 (0.14) |
-| Summer (JFM) | 0.17 (0.33) | 0.23 (0.36) | 0.23 (0.43) |
-| Winter (JAS) | 0.06 (0.85) | -0.89 (0.05) | -0.63 (0.37) |
+| Annual | -0.20 (0.21) | -0.41 (0.05) | -0.30 (0.14) |
+| Summer (JFM) | 0.17 (0.33) | 0.25 (0.33) | 0.23 (0.43) |
+| Winter (JAS) | 0.06 (0.85) | -0.91 (0.05) | -0.63 (0.37) |
 
 ## KERFIX / Figure 10
 
 KERFIX station position used in Figure 10: 50.6667 S, 68.4167 E. The GLORYS grid point selected by nearest-neighbor interpolation is 50.5125 S, 68.4615 E.
 
-KERFIX MLD is recomputed from `data/kerfix.csv` with the same `0.03 kg m-3` density threshold relative to 10 m used in Figure 10.
+KERFIX MLD is recomputed from `data/kerfix.csv` with the same `0.03 kg m-3` density threshold relative to 10 m used for CMA, GLORYS, GLORYS_CL, and the GLORYS section product.
 
 | Product | Period | n | Mean MLD (m) | Std MLD (m) | Min (m) | Max (m) |
 |---|---|---:|---:|---:|---:|---:|
@@ -172,10 +172,10 @@ Simple monthly linear fits at the station:
 | KERFIX, 1990-1994 | 15.23 | 0.037 |
 | GLORYS at KERFIX, 2007-2023 | 0.13 | 0.840 |
 
-Using the `0.02 kg m-3` threshold reported by Park et al. (1998), the same `kerfix.csv` gives a KERFIX mean MLD of `124.43 +/- 55.40 m`, with January and August monthly means of `69.4 m` and `188.3 m`, close to the Park et al. abstract values of about `60 m` in January and `185 m` in August.
+Park et al. (1998) reported KERFIX MLD with a `0.02 sigma_theta` density-difference criterion. Those values are useful context for the historical station record, but they are not used in the manuscript statistics or Figure 10 comparison.
 
 ## Park et al. (1998) Context
 
-ScienceDirect metadata/abstract for Park et al. (1998) states that monthly hydrographic data were collected at KERFIX from May 1991 to December 1994, at about 50 deg 40 min S, 68 deg 25 min E. MLD was determined using a `0.02 sigma_theta` density-difference criterion. The monthly mean MLD varied from about 60 m in January to 185 m in August. The study reported warm/low-salinity anomalies in 1992, cold/high-salinity anomalies in 1994, and significantly deeper mixed layers in the later years of the short record, with possible links to ENSO.
+ScienceDirect metadata/abstract for Park et al. (1998) states that monthly hydrographic data were collected at KERFIX from May 1991 to December 1994, at about 50 deg 40 min S, 68 deg 25 min E. MLD was determined in that paper using a `0.02 sigma_theta` density-difference criterion. The paper reported a strong seasonal cycle, warm/low-salinity anomalies in 1992, cold/high-salinity anomalies in 1994, and significantly deeper mixed layers in the later years of the short record, with possible links to ENSO.
 
 Bibliographic check: the DOI `10.1016/S0924-7963(98)00065-7` corresponds to Journal of Marine Systems volume 17, issues 1-4, pages 571-586, not pages 233-247.

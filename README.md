@@ -12,6 +12,15 @@ notebooks. The Python and R scripts are now the canonical workflow:
 
 Large NetCDF inputs and generated outputs are intentionally ignored by Git. Place the required local inputs under `data/` before running the pipeline.
 
+## MLD Definition
+
+All MLD products in the workflow use the same density threshold: the depth where
+potential-density anomaly differs from its 10 m value by
+`0.03 kg m-3`. This applies to CMA, full GLORYS, co-located GLORYS
+(`GLORYS_CL`), the GLORYS section product used for Figure 9, and the KERFIX
+profiles used for Figure 10. Park et al. (1998) reported KERFIX values with a
+`0.02` criterion; those values are used only as historical context.
+
 ## Inputs
 
 Expected local files:
