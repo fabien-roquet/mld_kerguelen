@@ -40,6 +40,7 @@ FIGURE_SCRIPTS = {
 }
 
 DEFAULT_FIGURES = ["2", "3", "4", "5", "6", "7", "8", "9", "10"]
+TREND_TABLE_SCRIPT = PROJECT_ROOT / "3_generate_figures" / "Table_1_trends.py"
 R_SETUP_SCRIPT = PROJECT_ROOT / "scripts" / "setup_r_packages.R"
 
 
@@ -142,6 +143,8 @@ def main() -> None:
     if "figures" in stages:
         for figure in args.figures:
             run_command([sys.executable, str(FIGURE_SCRIPTS[figure]), "--project-root", str(PROJECT_ROOT)])
+        if "7" in args.figures:
+            run_command([sys.executable, str(TREND_TABLE_SCRIPT), "--project-root", str(PROJECT_ROOT)])
 
     if "compare" in stages:
         run_command([sys.executable, str(PROJECT_ROOT / "scripts" / "compare_processed_reference.py")])

@@ -77,7 +77,7 @@ def r_analysis_df(
     coords = ds_coord[["long", "lat"]].to_dataframe().reset_index()
     df_XIEST = coords.join(df_XIEST.reset_index(drop=True))
 
-    time_index = pd.date_range(start="2007-01-01", periods=len(df_PHI), freq="M")
+    time_index = pd.date_range(start="2007-01-01", periods=len(df_PHI), freq="ME")
     df_PHI = df_PHI.set_axis(time_index, axis=0).rename_axis("time")
     df_MU = df_MU.set_axis(time_index, axis=0).rename_axis("time")
 
@@ -95,6 +95,9 @@ def r_analysis_df(
 
     ds_PHI["phi1"] = -ds_PHI["phi1"]
     ds_XIEST["xi1"] = -ds_XIEST["xi1"]
+    if dataset_name == "GLORYS_CL_masked" and "phi2" in ds_PHI and "xi2" in ds_XIEST:
+        ds_PHI["phi2"] = -ds_PHI["phi2"]
+        ds_XIEST["xi2"] = -ds_XIEST["xi2"]
 
     ds = xr.merge((ds_PHI, ds_MU, ds_XIEST))
     xi_phi_terms = []

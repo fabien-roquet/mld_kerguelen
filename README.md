@@ -2,11 +2,13 @@
 
 Reproducible analysis workflow for Kerguelen mixed-layer-depth variability.
 
-The code is organized as the three-step analysis used in the notebooks:
+The code is organized as the three-step analysis formerly developed in the
+notebooks. The Python and R scripts are now the canonical workflow:
 
 1. `1_data_processing/`: one Python script per processed dataset.
 2. `2_compute_fPCA_R/`: one R script per fPCA dataset.
-3. `3_generate_figures/`: one Python script per figure notebook.
+3. `3_generate_figures/`: one Python script per figure, plus the trend-table
+   generator used by the manuscript.
 
 Large NetCDF inputs and generated outputs are intentionally ignored by Git. Place the required local inputs under `data/` before running the pipeline.
 
@@ -64,12 +66,16 @@ uv run python run_analysis.py --stage fpca
 uv run python run_analysis.py --stage figures --figures 2 3 4
 ```
 
+When Figure 7 is included in the figure stage, `run_analysis.py` also writes
+`processed/3_figures/Table_1_trends.tex` from the same trend calculation.
+
 Run individual scripts directly:
 
 ```bash
 uv run python 1_data_processing/process_CMA.py
 uv run python run_analysis.py --stage fpca --datasets CMA
 uv run python 3_generate_figures/Figure_4_MU_modes.py
+uv run python 3_generate_figures/Table_1_trends.py
 ```
 
 ## Reference Outputs
@@ -80,4 +86,4 @@ uv run python 3_generate_figures/Figure_4_MU_modes.py
 uv run python scripts/compare_processed_reference.py
 ```
 
-Figure 1 is represented by a script, but it requires source files that are not part of the reduced two-input workflow.
+Figure 1 is represented by a script, but it requires source files that are not part of the reduced two-input workflow. Figure 6 is generated only as `Figure_6_RMSE_mask.png`; the unmasked RMSE figure is obsolete.

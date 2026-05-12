@@ -72,7 +72,7 @@ def main() -> None:
         (ax3, ds_CMA, qe_plot_cma, "(c) CMA", ""),
     ]
     for ax, ds_i, qe_i, panel_txt, ylab in map_items:
-        pcm = ax.pcolormesh(ds_i["long"], ds_i["lat"], qe_i.transpose("lat", "long"), shading="auto", cmap=cmo.amp, vmin=0, vmax=100)
+        pcm = ax.pcolormesh(ds_i["long"], ds_i["lat"], qe_i.transpose("lat", "long"), shading="auto", cmap=cmo.amp, vmin=0, vmax=80)
         add_common_map_layers(ax, elevation, ds_front)
         ax.set_xlabel("Longitude [deg E]")
         ax.set_ylabel(ylab)
@@ -96,7 +96,7 @@ def main() -> None:
     ax4.set_xticks(range(1, 13))
     ax4.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
     ax4.grid(True, alpha=0.3)
-    ax4.set_ylim(0, 100)
+    ax4.set_ylim(0, 60)
     ax4.text(0.01, 0.98, "(d)", transform=ax4.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
 
     print(f"The mean RMSE of GLORYS: {qe_g.mean().item():.2f}")

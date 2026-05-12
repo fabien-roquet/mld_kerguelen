@@ -82,7 +82,17 @@ def main() -> None:
         dataset_idx = i % len(dataset_order)
         d_name = dataset_order[dataset_idx]
         label = r"GLORYS$_{\mathregular{CL}}$" if d_name == "GLORYS_CL" else d_name
-        ax_i.text(0.01, 0.98, f"({chr(97 + i)}) {label} - {list(periods.keys())[period_idx]}", transform=ax_i.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
+        ax_i.text(
+            0.01,
+            0.98,
+            f"({chr(97 + i)}) {label} - {list(periods.keys())[period_idx]}",
+            transform=ax_i.transAxes,
+            ha="left",
+            va="top",
+            fontsize=20,
+            fontweight="bold",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 2.5},
+        )
 
     save_figure(fig, paths(args.project_root)["figures"] / "Figure_8_2D_trends.png")
 

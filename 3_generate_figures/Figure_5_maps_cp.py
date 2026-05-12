@@ -20,14 +20,15 @@ def main() -> None:
     datasets = [("GLORYS", fpca["GLORYS"][0]), ("GLORYS_CL", fpca["GLORYS_CL"][0]), ("CMA", fpca["CMA"][0])]
 
     def plot_mode_panel(ax, ds_i, mode_name, is_bottom=False, is_left=False):
+        vlim = 250 if mode_name == "xi1" else 50
         im = ax.pcolormesh(
             ds_i["long"],
             ds_i["lat"],
             ds_i[mode_name].transpose("lat", "long"),
             shading="auto",
             cmap=cmo.balance,
-            vmin=-250 if mode_name == "xi1" else -20,
-            vmax=250 if mode_name == "xi1" else 20,
+            vmin=-vlim,
+            vmax=vlim,
         )
         add_common_map_layers(ax, elevation, ds_front)
         ax.set_xlabel("Longitude [deg E]" if is_bottom else "")
@@ -54,7 +55,17 @@ def main() -> None:
     panel_dataset_labels = [label for label, _ in datasets] * 2
     for i, ax_i in enumerate(axes_top + axes_bottom):
         label = r"GLORYS$_{\mathregular{CL}}$" if panel_dataset_labels[i] == "GLORYS_CL" else panel_dataset_labels[i]
-        ax_i.text(0.01, 0.98, f"({chr(97 + i)}) {label}", transform=ax_i.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
+        ax_i.text(
+            0.01,
+            0.98,
+            f"({chr(97 + i)}) {label}",
+            transform=ax_i.transAxes,
+            ha="left",
+            va="top",
+            fontsize=20,
+            fontweight="bold",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 2.5},
+        )
 
     save_figure(fig, paths(args.project_root)["figures"] / "Figure_5_cp_maps.png")
 
