@@ -20,7 +20,7 @@ def main() -> None:
     datasets = [("GLORYS", fpca["GLORYS"][0]), ("GLORYS_CL", fpca["GLORYS_CL"][0]), ("CMA", fpca["CMA"][0])]
 
     def plot_mode_panel(ax, ds_i, mode_name, is_bottom=False, is_left=False):
-        vlim = 250 if mode_name == "xi1" else 50
+        vlim = 250 if mode_name == "xi1" else 80
         im = ax.pcolormesh(
             ds_i["long"],
             ds_i["lat"],

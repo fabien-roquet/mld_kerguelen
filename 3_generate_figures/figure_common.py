@@ -109,17 +109,17 @@ def apply_fpca_spatial_mask(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-def load_fpca(project_root: str | Path = PROJECT_ROOT):
+def load_fpca(project_root: str | Path = PROJECT_ROOT, max_modes: int | None = None):
     from create_rec_datasets import r_analysis_df
 
     ds_cma, df_cma, df_xiest_cma, df_phi_cma, df_grid_cma, df_mu_cma, df_lambda_cma = r_analysis_df(
-        "CMA_masked", project_root=project_root
+        "CMA_masked", max_modes=max_modes, project_root=project_root
     )
     ds_g, df_g, df_xiest_g, df_phi_g, df_grid_g, df_mu_g, df_lambda_g = r_analysis_df(
-        "GLORYS_masked", dense=True, project_root=project_root
+        "GLORYS_masked", dense=True, max_modes=max_modes, project_root=project_root
     )
     ds_cl, df_cl, df_xiest_cl, df_phi_cl, df_grid_cl, df_mu_cl, df_lambda_cl = r_analysis_df(
-        "GLORYS_CL_masked", project_root=project_root
+        "GLORYS_CL_masked", max_modes=max_modes, project_root=project_root
     )
     return {
         "CMA": (apply_fpca_spatial_mask(ds_cma), df_cma, df_xiest_cma, df_phi_cma, df_grid_cma, df_mu_cma, df_lambda_cma),

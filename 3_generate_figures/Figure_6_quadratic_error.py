@@ -23,6 +23,9 @@ from figure_common import (
 )
 
 
+N_RECONSTRUCTION_MODES = 50
+
+
 def compute_qe(ds_pred, ds_ref, var="mld", mask=None):
     err = ds_pred[var] - ds_ref[var]
     if mask is not None:
@@ -44,7 +47,7 @@ def main() -> None:
     plt.rcParams.update({"font.size": 20})
 
     elevation, ds_front = topo_fronts(args.project_root)
-    fpca = load_fpca(args.project_root)
+    fpca = load_fpca(args.project_root, max_modes=N_RECONSTRUCTION_MODES)
     ds_G = fpca["GLORYS"][0]
     ds_CL = fpca["GLORYS_CL"][0]
     ds_CMA = fpca["CMA"][0]
@@ -76,7 +79,17 @@ def main() -> None:
         add_common_map_layers(ax, elevation, ds_front)
         ax.set_xlabel("Longitude [deg E]")
         ax.set_ylabel(ylab)
-        ax.text(0.01, 0.98, panel_txt, transform=ax.transAxes, ha="left", va="top", fontsize=20, fontweight="bold")
+        ax.text(
+            0.01,
+            0.98,
+            panel_txt,
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=20,
+            fontweight="bold",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 2.5},
+        )
     ax2.tick_params(axis="y", labelleft=False)
     ax3.tick_params(axis="y", labelleft=False)
     fig.colorbar(pcm, cax=cax).set_label("RMSE [m]")

@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from figure_common import open_gridded, parse_project_root_arg, paths, require_file, save_figure
+from figure_common import CMA_COLOR, open_gridded, parse_project_root_arg, paths, require_file, save_figure
+from create_rec_datasets import r_analysis_df
 
 
 def main() -> None:
@@ -42,17 +43,36 @@ def main() -> None:
     lon_ker = 68.4167
     lat_ker = -50.6667
     ds_G = open_gridded(args.project_root, "GLORYS_gridded.nc").sel(longitude=lon_ker, latitude=lat_ker, method="nearest")
+    ds_CMA_rec = r_analysis_df("CMA_masked", project_root=args.project_root)[0]
+    ds_CMA_clim = open_gridded(args.project_root, "CMA_clim.nc").rename({"longitude": "long", "latitude": "lat"})
+    ds_CMA_obs = open_gridded(args.project_root, "CMA_gridded.nc").sel(longitude=lon_ker, latitude=lat_ker, method="nearest")
+    cma_anom = ds_CMA_rec["mld"].sel(long=lon_ker, lat=lat_ker, method="nearest")
+    cma_clim = ds_CMA_clim["mld"].sel(long=lon_ker, lat=lat_ker, method="nearest")
+    cma = cma_anom.groupby("time.month") + cma_clim
 
     ker = ds_ker["mld"].dropna(dim="TIME")
     glo = ds_G["mld"].dropna(dim="time")
+    cma_obs = ds_CMA_obs["mld"].dropna(dim="time")
     ker_xlim = (ker["TIME"].min().values - np.timedelta64(30, "D"), ker["TIME"].max().values + np.timedelta64(30, "D"))
     glo_xlim = (glo["time"].min().values - np.timedelta64(90, "D"), glo["time"].max().values + np.timedelta64(90, "D"))
     ker_span = (ker_xlim[1] - ker_xlim[0]) / np.timedelta64(1, "D")
     glo_span = (glo_xlim[1] - glo_xlim[0]) / np.timedelta64(1, "D")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(30, 10), gridspec_kw={"width_ratios": [ker_span, glo_span], "wspace": 0.05})
-    ax1.plot(ker["TIME"].values, ker.values, color="#FF7733", lw=1.5, ms=4, label="KERFIX")
-    ax2.plot(glo["time"].values, glo.values, color="black", lw=1.5, label="GLORYS")
+    line_ker = ax1.plot(ker["TIME"].values, ker.values, color="#FF7733", lw=1.5, ms=4, label="KERFIX")[0]
+    line_glo = ax2.plot(glo["time"].values, glo.values, color="black", lw=1.5, label="GLORYS")[0]
+    line_cma = ax2.plot(cma["time"].values, cma.values, color=CMA_COLOR, lw=1.5, label="CMA reconstruction")[0]
+    points_cma = ax2.scatter(
+        cma_obs["time"].values,
+        cma_obs.values,
+        color=CMA_COLOR,
+        edgecolor="white",
+        linewidth=0.8,
+        s=70,
+        alpha=0.95,
+        label="CMA data",
+        zorder=5,
+    )
     ax1.set_xlim(*ker_xlim)
     ax2.set_xlim(*glo_xlim)
     for ax in (ax1, ax2):
@@ -76,10 +96,17 @@ def main() -> None:
 
     ker_mean, ker_std = float(ker.mean().values), float(ker.std().values)
     glo_mean, glo_std = float(glo.mean().values), float(glo.std().values)
-    ax1.axhline(ker_mean, color="#FF7733", ls="--", lw=2, alpha=0.9, label=f"MLD = {ker_mean:.1f} +/- {ker_std:.1f} m")
-    ax2.axhline(glo_mean, color="dimgray", ls="--", lw=2, alpha=0.9, label=f"MLD = {glo_mean:.1f} +/- {glo_std:.1f} m")
+    cma_mean, cma_std = float(cma.mean().values), float(cma.std().values)
+    mean_ker = ax1.axhline(ker_mean, color="#FF7733", ls="--", lw=2, alpha=0.9, label=f"Mean = {ker_mean:.1f} +/- {ker_std:.1f} m")
+    mean_glo = ax2.axhline(glo_mean, color="dimgray", ls="--", lw=2, alpha=0.9, label=f"Mean = {glo_mean:.1f} +/- {glo_std:.1f} m")
+    mean_cma = ax2.axhline(cma_mean, color=CMA_COLOR, ls="--", lw=2, alpha=0.9, label=f"Mean = {cma_mean:.1f} +/- {cma_std:.1f} m")
     ax1.set_ylabel("MLD [m]")
-    fig.legend(loc="upper center", ncol=2, bbox_to_anchor=(0.5, 0.87))
+    fig.legend(
+        handles=[line_ker, mean_ker, line_glo, mean_glo, line_cma, mean_cma, points_cma],
+        loc="upper center",
+        ncol=4,
+        bbox_to_anchor=(0.5, 0.87),
+    )
     save_figure(fig, paths(args.project_root)["figures"] / "Figure_10_KERFIX_GLORYS_timeseries.png")
 
 

@@ -22,6 +22,7 @@ def r_analysis_df(
     dataset_name: str,
     n_modes: str = "original",
     dense: bool = False,
+    max_modes: int | None = None,
     project_root: str | Path | None = None,
 ):
     """Load fPCA CSV outputs and rebuild the reconstructed MLD dataset.
@@ -37,6 +38,9 @@ def r_analysis_df(
     dense:
         Append ``"_dense"`` to the fPCA output directory. This is used for the
         GLORYS dense run.
+    max_modes:
+        If provided, reconstruct with only the first ``max_modes`` fPCA modes
+        from the processed output.
     project_root:
         Repository root. Defaults to the parent of ``3_generate_figures``.
     """
@@ -73,6 +77,17 @@ def r_analysis_df(
     df_GRID = _read_processed("PCA_GRID.csv", rename={"x": "time"})
     df_MU = _read_processed("PCA_MU.csv").rename(columns={"x": "MU"})
     df_lambda = _read_processed("PCA_LAMBDA.csv")
+
+    if max_modes is not None:
+        if max_modes < 1:
+            raise ValueError("max_modes must be at least 1")
+        available_modes = len(df_PHI.columns)
+        if max_modes > available_modes:
+            raise ValueError(f"Requested {max_modes} modes, but only {available_modes} are available for {dataset_name}")
+        mode_columns = [f"V{i}" for i in range(1, max_modes + 1)]
+        df_XIEST = df_XIEST.loc[:, mode_columns]
+        df_PHI = df_PHI.loc[:, mode_columns]
+        df_lambda = df_lambda.iloc[:max_modes].reset_index(drop=True)
 
     coords = ds_coord[["long", "lat"]].to_dataframe().reset_index()
     df_XIEST = coords.join(df_XIEST.reset_index(drop=True))
