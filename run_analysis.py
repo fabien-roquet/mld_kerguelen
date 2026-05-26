@@ -37,11 +37,15 @@ FIGURE_SCRIPTS = {
     "8": PROJECT_ROOT / "3_generate_figures" / "Figure_8_trend_maps.py",
     "9": PROJECT_ROOT / "3_generate_figures" / "Figure_9_sections.py",
     "10": PROJECT_ROOT / "3_generate_figures" / "Figure_10_KERFIX.py",
+    "A1": PROJECT_ROOT / "3_generate_figures" / "Figure_A1_PACE_sampling_trends.py",
+    "A2": PROJECT_ROOT / "3_generate_figures" / "Figure_A2_PACE_sampling_trend_maps.py",
+    "A3": PROJECT_ROOT / "3_generate_figures" / "Figure_A3_deep_region_trends.py",
 }
 
 DEFAULT_FIGURES = ["2", "3", "4", "5", "6", "7", "8", "9", "10"]
 TREND_TABLE_SCRIPT = PROJECT_ROOT / "3_generate_figures" / "Table_1_trends.py"
 R_SETUP_SCRIPT = PROJECT_ROOT / "scripts" / "setup_r_packages.R"
+GLORYS_RANDOM_SAMPLING_SCRIPT = PROJECT_ROOT / "2_compute_fPCA_R" / "script_PCA_GLORYS_random_sampling_2026.R"
 
 
 def read_pyproject() -> dict:
@@ -103,13 +107,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage",
         nargs="+",
-        choices=["setup", "data", "fpca", "figures", "compare"],
+        choices=["setup", "data", "fpca", "sampling", "figures", "compare"],
         default=["data", "fpca", "figures", "compare"],
         help="Pipeline stages to run.",
     )
     parser.add_argument("--datasets", nargs="+", choices=DATA_SCRIPTS.keys(), default=list(DATA_SCRIPTS.keys()))
     parser.add_argument("--figures", nargs="+", choices=FIGURE_SCRIPTS.keys(), default=DEFAULT_FIGURES)
     parser.add_argument("--force-data", action="store_true", help="Recompute data-processing outputs.")
+    parser.add_argument("--force-sampling", action="store_true", help="Recompute GLORYS random-sampling PACE outputs.")
+    parser.add_argument("--sampling-replicates", type=int, default=30, help="Number of pseudo-random sampling replicates.")
+    parser.add_argument("--sampling-levels", default="5,10,20", help="Comma-separated GLORYS sampling percentages.")
+    parser.add_argument("--sampling-seed", type=int, default=20260526, help="Base seed for reproducible random sampling.")
     parser.add_argument("--skip-reference-compare", action="store_true", help="Alias for omitting the compare stage.")
     parser.add_argument("--skip-r-setup", action="store_true", help="Do not check/install R packages before fPCA.")
     return parser.parse_args()
@@ -122,9 +130,9 @@ def main() -> None:
         stages.discard("compare")
 
     r_env = None
-    if ("setup" in stages or "fpca" in stages) and not args.skip_r_setup:
+    if ("setup" in stages or "fpca" in stages or "sampling" in stages) and not args.skip_r_setup:
         r_env = ensure_r_packages()
-    elif "fpca" in stages:
+    elif "fpca" in stages or "sampling" in stages:
         r_env = r_environment()
 
     if "data" in stages:
@@ -139,6 +147,23 @@ def main() -> None:
             script = FPCA_SCRIPTS.get(dataset)
             if script is not None:
                 run_command(["Rscript", str(script)], env=r_env)
+
+    if "sampling" in stages:
+        command = [
+            "Rscript",
+            str(GLORYS_RANDOM_SAMPLING_SCRIPT),
+            "--project-root",
+            str(PROJECT_ROOT),
+            "--replicates",
+            str(args.sampling_replicates),
+            "--levels",
+            args.sampling_levels,
+            "--seed",
+            str(args.sampling_seed),
+        ]
+        if args.force_sampling:
+            command.append("--force")
+        run_command(command, env=r_env)
 
     if "figures" in stages:
         for figure in args.figures:

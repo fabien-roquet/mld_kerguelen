@@ -72,11 +72,35 @@ Run only one stage:
 ```bash
 uv run python run_analysis.py --stage data
 uv run python run_analysis.py --stage fpca
+uv run python run_analysis.py --stage sampling
 uv run python run_analysis.py --stage figures --figures 2 3 4
 ```
 
 When Figure 7 is included in the figure stage, `run_analysis.py` also writes
 `processed/3_figures/Table_1_trends.tex` from the same trend calculation.
+
+Appendix Figures A1-A2 use the GLORYS MLD-anomaly random space-time sampling
+PACE sensitivity experiment. The sampling stage defaults to 30 pseudo-random
+replicates at 5%, 10%, and 20% sampling:
+
+```bash
+uv run python run_analysis.py --stage sampling
+uv run python run_analysis.py --stage figures --figures A1 A2
+```
+
+For a faster smoke test, reduce the number of replicates:
+
+```bash
+uv run python run_analysis.py --stage sampling --sampling-replicates 2 --sampling-levels 5,10
+```
+
+Figure A3 uses the GLORYS cp1 = 0 contour to define the negative deep-south
+region south of 50S, then reproduces the Figure 7 trend panels within that
+mask:
+
+```bash
+uv run python run_analysis.py --stage figures --figures A3
+```
 
 Run individual scripts directly:
 
@@ -85,6 +109,7 @@ uv run python 1_data_processing/process_CMA.py
 uv run python run_analysis.py --stage fpca --datasets CMA
 uv run python 3_generate_figures/Figure_4_MU_modes.py
 uv run python 3_generate_figures/Table_1_trends.py
+Rscript 2_compute_fPCA_R/script_PCA_GLORYS_random_sampling_2026.R
 ```
 
 ## Reference Outputs
