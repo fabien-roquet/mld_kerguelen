@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from figure_common import add_common_map_layers, cmo, parse_project_root_arg, paths, require_file, save_figure, topo_fronts
+from figure_common import add_common_map_layers, cmo, parse_project_root_arg, paths, require_file, topo_fronts
 
 
 MAP_PERCENTAGES = [5, 10, 20]
@@ -37,7 +37,7 @@ def format_slope(mean: float, std: float) -> str:
 def main() -> None:
     parser = parse_project_root_arg(argparse.ArgumentParser(description=__doc__))
     args = parser.parse_args()
-    plt.rcParams.update({"font.size": 13})
+    plt.rcParams.update({"font.size": 16})
 
     base_dir = sampling_dir(args.project_root)
     maps_file = require_file(
@@ -49,10 +49,20 @@ def main() -> None:
     summary = pd.read_csv(summary_file)
     elevation, ds_front = topo_fronts(args.project_root)
 
-    fig, axes_array = plt.subplots(1, len(MAP_PERCENTAGES), figsize=(18, 6), sharex=True, sharey=True)
-    axes = axes_array.ravel().tolist()
-    fig.subplots_adjust(left=0.06, right=0.88, bottom=0.12, top=0.86, wspace=0.08)
-    cax = fig.add_axes([0.9, 0.16, 0.018, 0.68])
+    fig = plt.figure(figsize=(18, 6))
+    gs = fig.add_gridspec(
+        1,
+        len(MAP_PERCENTAGES) + 1,
+        width_ratios=[1, 1, 1, 0.045],
+        left=0.06,
+        right=0.94,
+        bottom=0.14,
+        top=0.94,
+        wspace=0.12,
+    )
+    axes = [fig.add_subplot(gs[0, 0])]
+    axes.extend(fig.add_subplot(gs[0, i], sharex=axes[0], sharey=axes[0]) for i in range(1, len(MAP_PERCENTAGES)))
+    cax = fig.add_subplot(gs[0, -1])
     cbar_ticks = np.arange(-2.0, 2.5, 1)
     im = None
     for i, (ax, percentage) in enumerate(zip(axes, MAP_PERCENTAGES)):
@@ -78,13 +88,27 @@ def main() -> None:
         if not stat.empty:
             slope_text = format_slope(float(stat["slope_mean"].iloc[0]), float(stat["slope_std"].iloc[0]))
             slope_text = rf"{slope_text} m yr$^{{-1}}$"
-        ax.set_title(f"({chr(97 + i)}) {percentage}%\n{slope_text}", loc="left", fontsize=13, fontweight="bold")
+        ax.text(
+            0.01,
+            0.98,
+            f"({chr(97 + i)}) {percentage}%\n{slope_text}",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=15,
+            fontweight="bold",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 2.5},
+        )
 
     if im is not None:
         cbar = fig.colorbar(im, cax=cax, orientation="vertical", ticks=cbar_ticks)
         cbar.set_label("MLD anomaly trend [m yr$^{-1}$]")
 
-    save_figure(fig, paths(args.project_root)["figures"] / "Figure_A2_PACE_sampling_trend_maps.png")
+    out_file = paths(args.project_root)["figures"] / "Figure_A2_PACE_sampling_trend_maps.png"
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_file, dpi=300)
+    plt.close(fig)
+    print(f"Wrote {out_file}")
 
 
 if __name__ == "__main__":

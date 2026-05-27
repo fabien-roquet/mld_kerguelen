@@ -57,7 +57,7 @@ sample_space_time <- function(donmat, fraction, seed) {
   sampled
 }
 
-run_sparse_pace <- function(donmat, datemat, nmonth) {
+run_sparse_pace <- function(donmat, datemat, nmonth, fve_threshold, max_k_limit, method_rho) {
   subject_has_data <- rowSums(!is.na(donmat)) > 0
   if (sum(subject_has_data) < 3) {
     stop("Too few spatial cells contain sampled observations for PACE.")
@@ -65,7 +65,7 @@ run_sparse_pace <- function(donmat, datemat, nmonth) {
 
   don <- t(donmat[subject_has_data, , drop = FALSE])
   dat <- t(datemat[subject_has_data, , drop = FALSE])
-  max_k <- min(100, nmonth - 2, ncol(don) - 1)
+  max_k <- min(max_k_limit, nmonth - 2, ncol(don) - 1)
 
   res <- FPCA(
     data.frame(don),
@@ -79,10 +79,11 @@ run_sparse_pace <- function(donmat, datemat, nmonth) {
       nRegGrid = nmonth,
       dataType = "Sparse",
       methodSelectK = "FVE",
-      FVEthreshold = 1,
+      FVEthreshold = fve_threshold,
       methodXi = "CE",
       maxK = max_k,
-      error = FALSE,
+      error = TRUE,
+      methodRho = method_rho,
       plot = FALSE
     )
   )
@@ -100,7 +101,19 @@ run_sparse_pace <- function(donmat, datemat, nmonth) {
   full_xest
 }
 
-summarise_reconstruction <- function(xest, grid, time_table, percentage, replicate, seed, n_observations, source) {
+summarise_reconstruction <- function(
+  xest,
+  grid,
+  time_table,
+  percentage,
+  replicate,
+  seed,
+  n_observations,
+  source,
+  fve_threshold,
+  max_k_limit,
+  method_rho
+) {
   years <- sort(unique(time_table$year))
   annual_groups <- split(seq_len(nrow(time_table)), time_table$year)
   annual_by_cell <- sapply(annual_groups, function(idx) {
@@ -130,7 +143,10 @@ summarise_reconstruction <- function(xest, grid, time_table, percentage, replica
     n_observations = n_observations,
     slope = trend[["slope"]],
     pvalue = trend[["pvalue"]],
-    source = source
+    source = source,
+    fve_threshold = fve_threshold,
+    max_k = max_k_limit,
+    method_rho = method_rho
   )
   trend_map <- data.frame(
     percentage = percentage,
@@ -139,7 +155,10 @@ summarise_reconstruction <- function(xest, grid, time_table, percentage, replica
     long = grid$long,
     lat = grid$lat,
     slope = map_slopes,
-    source = source
+    source = source,
+    fve_threshold = fve_threshold,
+    max_k = max_k_limit,
+    method_rho = method_rho
   )
 
   list(series = series, global_trend = global_trend, trend_map = trend_map)
@@ -165,7 +184,7 @@ write_replicate_outputs <- function(out_dir, tag, outputs) {
   write.csv(outputs$trend_map, file.path(out_dir, paste0(tag, "_annual_trend_map.csv")), row.names = FALSE)
 }
 
-replicate_outputs_are_current <- function(expected_files, seed) {
+replicate_outputs_are_current <- function(expected_files, seed, fve_threshold, max_k_limit, method_rho) {
   if (!all(file.exists(expected_files))) {
     return(FALSE)
   }
@@ -174,7 +193,12 @@ replicate_outputs_are_current <- function(expected_files, seed) {
     return(FALSE)
   }
   trend <- read.csv(trend_file)
-  nrow(trend) == 1 && "seed" %in% names(trend) && trend$seed[1] == seed
+  nrow(trend) == 1 &&
+    all(c("seed", "fve_threshold", "max_k", "method_rho") %in% names(trend)) &&
+    trend$seed[1] == seed &&
+    isTRUE(all.equal(trend$fve_threshold[1], fve_threshold)) &&
+    trend$max_k[1] == max_k_limit &&
+    trend$method_rho[1] == method_rho
 }
 
 aggregate_outputs <- function(replicate_dir, output_dir, percentages, replicates, base_seed) {
@@ -183,7 +207,14 @@ aggregate_outputs <- function(replicate_dir, output_dir, percentages, replicates
     if (length(files) == 0) {
       stop(paste("No replicate outputs found for", pattern))
     }
-    do.call(rbind, lapply(files, read.csv))
+    data_frames <- lapply(files, read.csv)
+    all_columns <- unique(unlist(lapply(data_frames, names)))
+    data_frames <- lapply(data_frames, function(data_frame) {
+      missing_columns <- setdiff(all_columns, names(data_frame))
+      data_frame[missing_columns] <- NA
+      data_frame[all_columns]
+    })
+    do.call(rbind, data_frames)
   }
 
   annual_series <- read_group("_annual_series[.]csv$")
@@ -241,6 +272,9 @@ replicates <- as.integer(get_arg(args, "--replicates", "30"))
 base_seed <- as.integer(get_arg(args, "--seed", "20260526"))
 levels_text <- get_arg(args, "--levels", "5,10,20")
 percentages <- as.integer(strsplit(levels_text, ",")[[1]])
+fve_threshold <- as.numeric(get_arg(args, "--pace-fve", "0.90"))
+max_k_limit <- as.integer(get_arg(args, "--pace-max-k", "20"))
+method_rho <- get_arg(args, "--pace-method-rho", "trunc")
 force <- has_flag(args, "--force")
 
 if (any(is.na(percentages)) || any(percentages <= 0) || any(percentages > 100)) {
@@ -248,6 +282,15 @@ if (any(is.na(percentages)) || any(percentages <= 0) || any(percentages > 100)) 
 }
 if (is.na(replicates) || replicates < 1) {
   stop("--replicates must be a positive integer.")
+}
+if (!is.finite(fve_threshold) || fve_threshold <= 0 || fve_threshold > 1) {
+  stop("--pace-fve must be in the interval (0, 1].")
+}
+if (is.na(max_k_limit) || max_k_limit < 1) {
+  stop("--pace-max-k must be a positive integer.")
+}
+if (!method_rho %in% c("trunc", "ridge", "vanilla")) {
+  stop("--pace-method-rho must be one of: trunc, ridge, vanilla.")
 }
 
 suppressPackageStartupMessages(library(fdapace))
@@ -291,7 +334,7 @@ for (percentage in percentages) {
       paste0(tag, c("_annual_series.csv", "_global_trend.csv", "_annual_trend_map.csv"))
     )
 
-    if (!force && replicate_outputs_are_current(expected_files, seed)) {
+    if (!force && replicate_outputs_are_current(expected_files, seed, fve_threshold, max_k_limit, method_rho)) {
       message("Skipping existing ", tag)
       next
     }
@@ -306,7 +349,7 @@ for (percentage in percentages) {
       n_observations <- available_count
     } else {
       sampled <- sample_space_time(donmat, fraction, seed)
-      xest <- run_sparse_pace(sampled, datemat, nmonth)
+      xest <- run_sparse_pace(sampled, datemat, nmonth, fve_threshold, max_k_limit, method_rho)
       source <- "sparse_pace"
       n_observations <- sum(!is.na(sampled))
     }
@@ -319,7 +362,10 @@ for (percentage in percentages) {
       replicate = replicate,
       seed = seed,
       n_observations = n_observations,
-      source = source
+      source = source,
+      fve_threshold = fve_threshold,
+      max_k_limit = max_k_limit,
+      method_rho = method_rho
     )
     write_replicate_outputs(replicate_dir, tag, outputs)
   }
